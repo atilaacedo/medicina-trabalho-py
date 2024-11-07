@@ -45,12 +45,12 @@ def insert_data(table, data):
         cursor.close()
         conn.close()
 
-# Geração de dados
+
 def generate_empresa_data(num_rows):
     data = []
     suffixes = ["Consultoria", "Tecnologia", "Soluções", "Serviços", "Empreendimentos", "Logística", "Financeira", "Indústria", "Comércio"]
     prefixes = ["Global", "Prime", "Grupo", "Master", "Nacional", "Integral", "Premium"]
-    
+
     for _ in range(num_rows):
         prefix = random.choice(prefixes)  
         base_name = fake.company() 
@@ -219,14 +219,14 @@ def generate_emissao_atestado_data(num_rows, consulta_ids):
 def insert_in_parallel(num_threads=4, num_rows_per_thread=1000):
     start_time = time.time()
 
-    # Inserir dados de empresas
+  
     empresa_data = generate_empresa_data(num_rows_per_thread)
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
         futures = [executor.submit(insert_data, 'empresa', empresa_data)]
         for future in futures:
             future.result()
 
-    # Recuperar IDs para referência cruzada
+   
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM empresa")
@@ -245,7 +245,7 @@ def insert_in_parallel(num_threads=4, num_rows_per_thread=1000):
         for future in futures:
             future.result()
 
-    # Recuperar IDs para próximas inserções
+
     cursor.execute("SELECT id FROM funcionario")
     funcionario_ids = [row[0] for row in cursor.fetchall()]
     cursor.execute("SELECT id FROM medico")
@@ -253,7 +253,7 @@ def insert_in_parallel(num_threads=4, num_rows_per_thread=1000):
     cursor.execute("SELECT id FROM exame")
     exame_ids = [row[0] for row in cursor.fetchall()]
 
-    # Inserir dados em exame_funcionario e consulta
+    
     exame_funcionario_data = generate_exame_funcionario_data(num_rows_per_thread, exame_ids, funcionario_ids)
     consulta_data = generate_consulta_data(num_rows_per_thread, funcionario_ids, medico_ids)
 
@@ -265,7 +265,7 @@ def insert_in_parallel(num_threads=4, num_rows_per_thread=1000):
         for future in futures:
             future.result()
 
-    # Inserir dados em emissao_atestado
+
     cursor.execute("SELECT id, id_medico FROM consulta")
     consulta_ids = [(row[0], row[1]) for row in cursor.fetchall()]
     atestado_data = generate_emissao_atestado_data(num_rows_per_thread, consulta_ids)
